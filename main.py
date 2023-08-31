@@ -1,6 +1,8 @@
 import modules as m
 from transformers import BertTokenizerFast, BertForQuestionAnswering, AdamW
 from tqdm import tqdm
+import torch
+
 train_passage, train_questions, train_answers = m.read_file(r'D:\ML-Projects\Fine-Tuned-Question-Answering\Data\train-v2.0.json')
 valid_passage, valid_questions, valid_answers = m.read_file(r'D:\ML-Projects\Fine-Tuned-Question-Answering\Data\dev-v2.0.json')
 
@@ -21,7 +23,11 @@ valid_dataset = m.squad_dataset(valid_encodings)
 train_loader = m.make_dataloader(train_dataset)
 valid_loader = m.make_dataloader(valid_dataset)
 
+
+device = torch.device('cuda')
+
 model = BertForQuestionAnswering.from_pretrained('bert-base-uncased')
+model.to(device)
 
 epochs = 5
 lr = 1e-5
@@ -35,10 +41,10 @@ for epoch in range(epochs):
 
             optim.zero_grad()
 
-            input_ids = batch['input_ids']
-            masks = batch['attention_mask']
-            start_pos = batch['start_positions']
-            end_pos = batch['end_positions']
+            input_ids = batch['input_ids'].to(device)
+            masks = batch['attention_mask'].to(device)
+            start_pos = batch['start_positions'].to(device)
+            end_pos = batch['end_positions'].to(device)
 
             outputs = model(input_ids = input_ids, attention_mask = masks, start_positions = start_pos, end_positions = end_pos)
             loss = outputs[0]
